@@ -3,6 +3,7 @@ package src
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	zmq "github.com/go-zeromq/zmq4"
@@ -36,8 +37,8 @@ func ZMQServer() error {
 
 		//fmt.Println("Received ", msg)
 		// Do some 'work'
-		reply := fmt.Sprintf("Received %s", item.Foo)
-		if err := socket.Send(zmq.NewMsgString(reply)); err != nil {
+		//reply := fmt.Sprintf("%s", item.Foo)
+		if err := socket.Send(zmq.NewMsgString(item.Foo)); err != nil {
 			return fmt.Errorf("sending reply: %w", err)
 		}
 	}
@@ -52,7 +53,11 @@ func ZMQClient(message string) error {
 	if err := socket.Dial("tcp://localhost:5555"); err != nil {
 		return fmt.Errorf("dialing: %w", err)
 	}
-	b, err := msgpack.Marshal(&Item{Foo: message, Elem: 4})
+    enc, err := EncTest(message)
+    if err != nil {
+        log.Fatal(err)
+    }
+	b, err := msgpack.Marshal(&Item{Foo: enc, Elem: 4})
 	if err != nil {
 		panic(err)
 	}
@@ -66,6 +71,10 @@ func ZMQClient(message string) error {
 	if err != nil {
 		return fmt.Errorf("receiving: %w", err)
 	}
-	fmt.Println("received ", r.String())
+    msg := fmt.Sprintf("%s", r.Frames[0])
+    fmt.Println("Message ", msg)
+    resp, err := DecTest(msg)
+    fmt.Println("---")
+    fmt.Println(resp)
 	return nil
 }
