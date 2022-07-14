@@ -31,7 +31,7 @@ func ZMQServer() error {
 		var item Item
 		err = msgpack.Unmarshal(msg.Bytes(), &item)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 		fmt.Println(item.Foo, item.Elem)
 
@@ -59,7 +59,7 @@ func ZMQClient(message string) error {
     }
 	b, err := msgpack.Marshal(&Item{Foo: enc, Elem: 4})
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	m := zmq.NewMsgFrom(b)
 	fmt.Println("sending ", m)

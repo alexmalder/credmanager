@@ -7,7 +7,8 @@ import (
 )
 
 func test() {
-	encStr, err := src.EncTest(src.FileAsString("config.yml"))
+	rawData := src.FileAsString("test.yml")
+	encStr, err := src.EncTest(rawData)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -16,6 +17,9 @@ func test() {
 		log.Fatal(err)
 	}
 	log.Printf("Decrypted Secret: \n%s", decStr)
+	if rawData == decStr {
+		log.Println("Test successfull")
+	}
 }
 
 func main() {
@@ -37,6 +41,7 @@ func main() {
 			log.Fatal(err)
 		}
 	} else {
-		test()
+		//test()
+		src.PgTest()
 	}
 }

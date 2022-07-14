@@ -1,0 +1,8 @@
+---
+queries:
+  - query: |
+      create table if not exists secrets (
+        id serial primary key, 
+        key varchar(255) not null, 
+        value varchar(4096) not null
+      )
