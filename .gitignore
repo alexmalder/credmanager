@@ -1,0 +1,7 @@
+/pubring.*
+/secring.*
+/private-keys*
+/.gpg*
+/trustdb.gpg
+/openpgp-revocs.d
+/config.yml
