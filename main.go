@@ -23,18 +23,18 @@ func main() {
 	if target == "server" {
 		err := src.ZMQServer()
 		if err != nil {
-			log.Fatalf("server: %w", err)
+			log.Fatal(err)
 		}
 	} else if target == "client" {
 		err := src.ZMQClient("ok")
 		if err != nil {
-			log.Fatalf("client: %v", err)
+			log.Fatal(err)
 		}
 	} else if target == "load" {
 		//log.Println(src.FileAsString(os.Args[2]))
 		err := src.ZMQClient(src.FileAsString(os.Args[2]))
 		if err != nil {
-			log.Fatalf("client: %v", err)
+			log.Fatal(err)
 		}
 	} else {
 		test()
