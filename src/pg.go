@@ -3,48 +3,27 @@ package src
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"os"
 
 	"github.com/jackc/pgx/v4"
-	"gopkg.in/yaml.v3"
 )
 
 type Secret struct {
-	ID    int
-	Key   string
-	Value string
-	conn  *pgx.Conn
-}
-
-type Config struct {
-	Queries []struct {
-		Query string
-	}
-}
-
-func readConfig() Config {
-	yfile, err := ioutil.ReadFile("config.yml")
-	if err != nil {
-		log.Fatal(err)
-	}
-	data := Config{}
-	err2 := yaml.Unmarshal(yfile, &data)
-	if err2 != nil {
-		log.Fatal(err2)
-	}
-	//for _, v := range data.Queries {fmt.Printf("%s\n", v.Query)}
-	return data
+	ID     int
+	Key    string
+	Value  string
+	config Config
+	conn   *pgx.Conn
 }
 
 func (s Secret) Print() {
 	fmt.Println(s)
 }
 
-func (s Secret) Migrate(config Config) {
-	for _, v := range config.Queries {
+func (s Secret) Migrate() {
+	for _, v := range s.config.Queries {
 		_, err := s.conn.Exec(context.Background(), v.Query)
 		log.Println(v)
 		if err != nil {
@@ -54,21 +33,41 @@ func (s Secret) Migrate(config Config) {
 }
 
 func (s Secret) Save() {
-	_, err := s.conn.Exec(context.Background(), "insert into secrets (key, value) values($1, $2)", s.Key, s.Value)
+	_, err := s.conn.Exec(context.Background(), s.config.InsertSecret, s.Key, s.Value)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
 func (s Secret) Remove() {
-	_, err := s.conn.Exec(context.Background(), "delete from secrets where id=$1", s.ID)
+	_, err := s.conn.Exec(context.Background(), s.config.DeleteSecret, s.ID)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func ConnString() string {
-	connection := fmt.Sprintf(
+func (s Secret) List() error {
+	rows, _ := s.conn.Query(context.Background(), s.config.SelectSecrets)
+	for rows.Next() {
+		err := rows.Scan(&s.ID, &s.Key, &s.Value)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("ID: %v\n", s.ID)
+		fmt.Printf("Key: %s\n", s.Key)
+		fmt.Printf("Value: %s\n", s.Value)
+		fmt.Printf("---\n")
+	}
+	return rows.Err()
+}
+
+func (s Secret) Update() error {
+	_, err := s.conn.Exec(context.Background(), s.config.DeleteSecret, s.Key, s.Value, s.ID)
+	return err
+}
+
+func PgTest() {
+	connString := fmt.Sprintf(
 		"postgresql://%s:%s@%s:%s/%s",
 		os.Getenv("POSTGRES_USER"),
 		os.Getenv("POSTGRES_PASSWORD"),
@@ -76,11 +75,7 @@ func ConnString() string {
 		os.Getenv("POSTGRES_PORT"),
 		os.Getenv("POSTGRES_DB"),
 	)
-	return connection
-}
-
-func PgTest() {
-	conn, err := pgx.Connect(context.Background(), ConnString())
+	connection, err := pgx.Connect(context.Background(), connString)
 	if err != nil {
 		log.Fatal("pgx.Connect", err)
 	}
@@ -89,11 +84,12 @@ func PgTest() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	Secret := Secret{1, "postgres_user", encStr, conn}
+	config := ReadConfig()
+	Secret := Secret{1, "postgres_user", encStr, config, connection}
 	Secret.Print()
-	config := readConfig()
-	Secret.Migrate(config)
+	Secret.Migrate()
 	Secret.Save()
+	Secret.List()
 	//Secret.Remove()
 }
 
