@@ -12,10 +12,11 @@ type Config struct {
 	Queries []struct {
 		Query string
 	}
-	InsertSecret string `yaml:"insert_secret"`
-	SelectSecret string `yaml:"select_secret"`
-	UpdateSecret string `yaml:"update_secret"`
-	DeleteSecret string `yaml:"delete_secret"`
+	InsertSecret  string `yaml:"insert_secret"`
+	SelectSecrets string `yaml:"select_secrets"`
+	SelectSecret  string `yaml:"select_secret"`
+	UpdateSecret  string `yaml:"update_secret"`
+	DeleteSecret  string `yaml:"delete_secret"`
 }
 
 // read config yaml and return Config object
@@ -30,6 +31,6 @@ func ReadConfig() Config {
 		log.Fatal(err2)
 	}
 	//for _, v := range data.Queries {fmt.Printf("%s\n", v.Query)}
-    log.Println(data)
+	//log.Println(data)
 	return data
 }

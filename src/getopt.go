@@ -11,6 +11,7 @@ import (
 const (
 	ScopeCreate     string = "create"
 	ScopeCreateFile        = "create-file"
+	ScopeSelect            = "select"
 	ScopeGet               = "get"
 	ScopePut               = "put"
 	ScopeDelete            = "delete"
@@ -39,6 +40,12 @@ func Getopts() Secret {
 					{"key|k", "key of a new secret", getopt.Required, ""},
 					{"file|f", "file of a new secret", getopt.Required, ""},
 				},
+			},
+			ScopeSelect: {
+				"select secrets",
+				getopt.Definitions{
+                    {"organization|s", "organization id", getopt.Optional | getopt.ExampleIsDefault, ""},
+                },
 			},
 			ScopeGet: {
 				"get secret by key",
@@ -87,6 +94,7 @@ func Getopts() Secret {
 	//fmt.Printf("options: %#v\n", options)
 	var request Secret
 	request.Scope = scope
+    log.Println(scope)
 	for k, v := range options {
 		//log.Println(k, v.String)
 		switch {
@@ -95,7 +103,7 @@ func Getopts() Secret {
 		case k == "value":
 			request.Value = v.String
 		case k == "file":
-			request.File = v.String
+			request.Filepath = v.String
 		}
 	}
 	return request

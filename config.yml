@@ -6,7 +6,9 @@ queries:
         key varchar(255) unique not null,
         value varchar(4096) not null
       )
+# single queries
 insert_secret: insert into secrets (key, value) values($1, $2) returning id
 delete_secret: delete from secrets where id=$1
-select_secret: select * from secrets where key=$1
+select_secrets: select key, value from secrets
+select_secret: select key, value from secrets where key=$1
 update_secret: update secrets set key=$1, value=$2 where id=$3
