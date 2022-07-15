@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	gpghomedir     = os.Getenv("GPG_HOMEDIR")
+	gpghomedir     = os.Getenv("GPG_HOMEDIR") + "/"
 	passphrase = os.Getenv("GPG_PASSPHRASE")
 )
 

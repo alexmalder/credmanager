@@ -85,7 +85,7 @@ func Getopts() Secret {
 
 	//fmt.Printf("scope: %s\n", scope)
 	//fmt.Printf("options: %#v\n", options)
-	var request Request
+	var request Secret
 	request.Scope = scope
 	for k, v := range options {
 		//log.Println(k, v.String)

@@ -30,5 +30,6 @@ func ReadConfig() Config {
 		log.Fatal(err2)
 	}
 	//for _, v := range data.Queries {fmt.Printf("%s\n", v.Query)}
+    log.Println(data)
 	return data
 }

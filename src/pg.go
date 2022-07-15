@@ -15,8 +15,8 @@ type Secret struct {
 	Key    string
 	Value  string
 	File   string
-	config Config
-	conn   *pgx.Conn
+	Conf Config
+	Conn   *pgx.Conn
 }
 
 // print the current secret helper function
@@ -26,8 +26,8 @@ func (s Secret) Print() {
 
 // make database migrations
 func (s Secret) Migrate() {
-	for _, v := range s.config.Queries {
-		_, err := s.conn.Exec(context.Background(), v.Query)
+	for _, v := range s.Conf.Queries {
+		_, err := s.Conn.Exec(context.Background(), v.Query)
 		log.Println(v)
 		if err != nil {
 			log.Fatal(err)
@@ -37,15 +37,16 @@ func (s Secret) Migrate() {
 
 // save the current secret
 func (s Secret) Save() {
-	_, err := s.conn.Exec(context.Background(), s.config.InsertSecret, s.Key, s.Value)
+    log.Println(s.Conf.InsertSecret, s.Key, s.Value)
+	_, err := s.Conn.Exec(context.Background(), s.Conf.InsertSecret, s.Key, s.Value)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Save ", err)
 	}
 }
 
 // select secret list by key
-func (s Secret) List(key string) error {
-	rows, _ := s.conn.Query(context.Background(), s.config.SelectSecret, key)
+func (s Secret) List() error {
+	rows, _ := s.Conn.Query(context.Background(), s.Conf.SelectSecret, s.Key)
 	for rows.Next() {
 		err := rows.Scan(&s.Key, &s.Value)
 		if err != nil {
@@ -60,7 +61,7 @@ func (s Secret) List(key string) error {
 
 // remove secret by key
 func (s Secret) Remove() {
-	_, err := s.conn.Exec(context.Background(), s.config.DeleteSecret, s.Key)
+	_, err := s.Conn.Exec(context.Background(), s.Conf.DeleteSecret, s.Key)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -68,13 +69,12 @@ func (s Secret) Remove() {
 
 // put secret value by key
 func (s Secret) Update() error {
-	_, err := s.conn.Exec(context.Background(), s.config.DeleteSecret, s.Key, s.Value)
+	_, err := s.Conn.Exec(context.Background(), s.Conf.DeleteSecret, s.Key, s.Value)
 	return err
 }
 
-// test postgres functions
-func PgTest() {
-	connString := fmt.Sprintf(
+func ConnectionString() string {
+    return fmt.Sprintf(
 		"postgresql://%s:%s@%s:%s/%s",
 		os.Getenv("POSTGRES_USER"),
 		os.Getenv("POSTGRES_PASSWORD"),
@@ -82,7 +82,11 @@ func PgTest() {
 		os.Getenv("POSTGRES_PORT"),
 		os.Getenv("POSTGRES_DB"),
 	)
-	connection, err := pgx.Connect(context.Background(), connString)
+}
+
+// test postgres functions
+func PgTest() {
+	connection, err := pgx.Connect(context.Background(), ConnectionString())
 	if err != nil {
 		log.Fatal("pgx.Connect", err)
 	}

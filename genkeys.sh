@@ -1,4 +1,4 @@
-homedir=./
-gpg --gen-key --homedir $homedir
-gpg --no-default-keyring --homedir $homedir/ --export-secret-keys > $homedir/secring.gpg
-gpg --no-default-keyring --homedir $homedir/ --export > $homedir/pubring.gpg
+#!/bin/bash
+gpg --expert --full-gen-key --homedir $GPG_HOMEDIR
+gpg --no-default-keyring --homedir $GPG_HOMEDIR/ --export-secret-keys > $GPG_HOMEDIR/secring.gpg
+gpg --no-default-keyring --homedir $GPG_HOMEDIR/ --export > $GPG_HOMEDIR/pubring.gpg
