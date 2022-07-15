@@ -3,45 +3,23 @@ package main
 import (
 	"log"
 	"main/src"
-	"os"
 )
 
-func test() {
-	rawData := src.FileAsString("test.yml")
-	encStr, err := src.EncTest(rawData)
-	if err != nil {
-		log.Fatal(err)
-	}
-	decStr, err := src.DecTest(encStr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Decrypted Secret: \n%s", decStr)
-	if rawData == decStr {
-		log.Println("Test successfull")
-	}
-}
-
 func main() {
-	target := os.Args[1]
-	if target == "server" {
-		err := src.ZMQServer()
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else if target == "client" {
-		err := src.ZMQClient("ok")
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else if target == "load" {
-		//log.Println(src.FileAsString(os.Args[2]))
-		err := src.ZMQClient(src.FileAsString(os.Args[2]))
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		//test()
-		src.PgTest()
+	opts := src.Getopts()
+	log.Println(opts)
+	switch {
+	case opts.Scope == src.ScopeCreate:
+		log.Println(src.ScopeCreate)
+	case opts.Scope == src.ScopeCreateFile:
+		log.Println(src.ScopeCreateFile)
+	case opts.Scope == src.ScopeGet:
+		log.Println(src.ScopeGet)
+	case opts.Scope == src.ScopePut:
+		log.Println(src.ScopePut)
+	case opts.Scope == src.ScopeDelete:
+		log.Println(src.ScopeDelete)
+	default:
+		log.Println("Scope is not defined")
 	}
 }

@@ -4,24 +4,27 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
 	"os"
 
 	"github.com/jackc/pgx/v4"
 )
 
+// secret in database data structure
 type Secret struct {
-	ID     int
+	Scope  string
 	Key    string
 	Value  string
+	File   string
 	config Config
 	conn   *pgx.Conn
 }
 
+// print the current secret helper function
 func (s Secret) Print() {
 	fmt.Println(s)
 }
 
+// make database migrations
 func (s Secret) Migrate() {
 	for _, v := range s.config.Queries {
 		_, err := s.conn.Exec(context.Background(), v.Query)
@@ -32,6 +35,7 @@ func (s Secret) Migrate() {
 	}
 }
 
+// save the current secret
 func (s Secret) Save() {
 	_, err := s.conn.Exec(context.Background(), s.config.InsertSecret, s.Key, s.Value)
 	if err != nil {
@@ -39,21 +43,14 @@ func (s Secret) Save() {
 	}
 }
 
-func (s Secret) Remove() {
-	_, err := s.conn.Exec(context.Background(), s.config.DeleteSecret, s.ID)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func (s Secret) List() error {
-	rows, _ := s.conn.Query(context.Background(), s.config.SelectSecrets)
+// select secret list by key
+func (s Secret) List(key string) error {
+	rows, _ := s.conn.Query(context.Background(), s.config.SelectSecret, key)
 	for rows.Next() {
-		err := rows.Scan(&s.ID, &s.Key, &s.Value)
+		err := rows.Scan(&s.Key, &s.Value)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("ID: %v\n", s.ID)
 		fmt.Printf("Key: %s\n", s.Key)
 		fmt.Printf("Value: %s\n", s.Value)
 		fmt.Printf("---\n")
@@ -61,11 +58,21 @@ func (s Secret) List() error {
 	return rows.Err()
 }
 
+// remove secret by key
+func (s Secret) Remove() {
+	_, err := s.conn.Exec(context.Background(), s.config.DeleteSecret, s.Key)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// put secret value by key
 func (s Secret) Update() error {
-	_, err := s.conn.Exec(context.Background(), s.config.DeleteSecret, s.Key, s.Value, s.ID)
+	_, err := s.conn.Exec(context.Background(), s.config.DeleteSecret, s.Key, s.Value)
 	return err
 }
 
+// test postgres functions
 func PgTest() {
 	connString := fmt.Sprintf(
 		"postgresql://%s:%s@%s:%s/%s",
@@ -85,35 +92,10 @@ func PgTest() {
 		log.Fatal(err)
 	}
 	config := ReadConfig()
-	Secret := Secret{1, "postgres_user", encStr, config, connection}
+	Secret := Secret{ScopeCreate, "postgres_user", encStr, "", config, connection}
 	Secret.Print()
 	Secret.Migrate()
 	Secret.Save()
 	Secret.List()
 	//Secret.Remove()
-}
-
-func FingerPrint() {
-	ifaces, err := net.Interfaces()
-	if err != nil {
-	}
-	for _, i := range ifaces {
-		addrs, err := i.Addrs()
-		if err != nil {
-		}
-		// handle err
-		for _, addr := range addrs {
-			var ip net.IP
-			switch v := addr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			case *net.IPAddr:
-				ip = v.IP
-			}
-			hostname, err := os.Hostname()
-			log.Println(ip, hostname)
-			if err != nil {
-			}
-		}
-	}
 }

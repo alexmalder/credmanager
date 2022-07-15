@@ -7,16 +7,18 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// config yaml for sql
 type Config struct {
 	Queries []struct {
 		Query string
 	}
-	InsertSecret  string `yaml:"insert_secret"`
-	SelectSecrets string `yaml:"select_secrets"`
-	UpdateSecret  string `yaml:"update_secret"`
-	DeleteSecret  string `yaml:"delete_secret"`
+	InsertSecret string `yaml:"insert_secret"`
+	SelectSecret string `yaml:"select_secret"`
+	UpdateSecret string `yaml:"update_secret"`
+	DeleteSecret string `yaml:"delete_secret"`
 }
 
+// read config yaml and return Config object
 func ReadConfig() Config {
 	yfile, err := ioutil.ReadFile("config.yml")
 	if err != nil {

@@ -11,10 +11,11 @@ import (
 )
 
 var (
-	prefix     = "./"
+	gpghomedir     = os.Getenv("GPG_HOMEDIR")
 	passphrase = os.Getenv("GPG_PASSPHRASE")
 )
 
+// read file as string utility function
 func FileAsString(path string) string {
 	content, err := ioutil.ReadFile(path) // the file is inside the local directory
 	if err != nil {
@@ -24,6 +25,7 @@ func FileAsString(path string) string {
 	return string(content)
 }
 
+// read keyring from file, public or private
 func readKeyring(keyring string) (openpgp.EntityList, error) {
 	// Read in public key
 	keyringFileBuffer, err := os.Open(keyring)
@@ -38,12 +40,13 @@ func readKeyring(keyring string) (openpgp.EntityList, error) {
 	return entityList, nil
 }
 
+// encode function
 func EncTest(secretString string) (string, error) {
 	log.Printf("Secret to hide: \n%s", secretString)
-	log.Printf("Public Keyring: %s", prefix+"pubring.gpg")
+	log.Printf("Public Keyring: %s", gpghomedir+"pubring.gpg")
 
 	// Read in public key
-	entityList, err := readKeyring(prefix + "pubring.gpg")
+	entityList, err := readKeyring(gpghomedir + "pubring.gpg")
 
 	// encrypt string
 	buf := new(bytes.Buffer)
@@ -73,13 +76,14 @@ func EncTest(secretString string) (string, error) {
 	return encStr, nil
 }
 
+// decode function
 func DecTest(encString string) (string, error) {
-	log.Println("Secret Keyring:", prefix+"secring.gpg")
+	log.Println("Secret Keyring:", gpghomedir+"secring.gpg")
 	log.Println("Passphrase:", passphrase)
 
 	// Open the private key file
 	var entity *openpgp.Entity
-	entityList, err := readKeyring(prefix + "secring.gpg")
+	entityList, err := readKeyring(gpghomedir + "secring.gpg")
 	if len(entityList) != 1 {
 		return "", err
 	}
@@ -113,4 +117,21 @@ func DecTest(encString string) (string, error) {
 	decStr := string(bytes)
 
 	return decStr, nil
+}
+
+// test encode and decode functions
+func TestGPG() {
+	rawData := FileAsString("test.yml")
+	encStr, err := EncTest(rawData)
+	if err != nil {
+		log.Fatal(err)
+	}
+	decStr, err := DecTest(encStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Decrypted Secret: \n%s", decStr)
+	if rawData == decStr {
+		log.Println("Test successfull")
+	}
 }
