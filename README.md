@@ -14,3 +14,9 @@
 
 - `key`: string
 - `filepath`: string
+
+## Todo
+
+- [ ] check put
+- [ ] check delete
+- [ ] import channels

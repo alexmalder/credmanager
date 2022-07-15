@@ -18,21 +18,17 @@ func main() {
 	secret.Conf = src.ReadConfig()
 	switch {
 	case secret.Scope == src.ScopeCreate:
-		//log.Println(src.ScopeCreate)
 		secret.Save()
 	case secret.Scope == src.ScopeCreateFile:
-		//log.Println(src.ScopeCreateFile)
-        secret.SaveFile()
+		secret.SaveFile()
 	case secret.Scope == src.ScopeSelect:
 		secret.Select()
 	case secret.Scope == src.ScopeGet:
-		//log.Println(src.ScopeGet)
 		secret.Get()
 	case secret.Scope == src.ScopePut:
-		//log.Println(src.ScopePut)
-        secret.Update()
+		secret.Update()
 	case secret.Scope == src.ScopeDelete:
-		//log.Println(src.ScopeDelete)
+		secret.Remove()
 	default:
 		log.Println("Scope is not defined")
 	}
