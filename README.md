@@ -9,6 +9,15 @@ go install
 go build -o credmanager main.go
 ```
 
+## Hot to generate keys
+
+```bash
+GPG_HOMEDIR=gpg # directory in gitignore
+gpg --expert --full-gen-key --homedir $GPG_HOMEDIR
+gpg --no-default-keyring --homedir $GPG_HOMEDIR/ --export-secret-keys > $GPG_HOMEDIR/secring.gpg
+gpg --no-default-keyring --homedir $GPG_HOMEDIR/ --export > $GPG_HOMEDIR/pubring.gpg
+```
+
 ## Example usage
 
 ```bash
@@ -53,7 +62,6 @@ Available commands:
 - `POSTGRES_DB`
 
 
-## Todo
+## Authors
 
-- [ ] check put
-- [ ] check delete
+- `vnmntn@mail.ru`
