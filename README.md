@@ -42,6 +42,18 @@ Available commands:
     select                  select secrets
 ```
 
+## Database table structure
+
+| Field    | Type          | Note                             |
+| -------- | ------------- | -------------------------------- |
+| key      | VARCHAR(255)  | key of a secret                  | 
+| value    | VARCHAR(4096) | value of a secret                | 
+| username | VARCHAR(255)  | optional field of a username     |
+| uri      | VARCHAR(1024) | optional field of a uri          |
+| notes    | VARCHAR(4096) | optional field of a notes        |
+| type     | VARCHAR(8)    | "file", "env", "login" or custom |
+
+
 ## Environment variables
 
 ### Bitwarden intergration
