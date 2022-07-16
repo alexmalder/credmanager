@@ -9,12 +9,14 @@ import (
 )
 
 const (
-	ScopeCreate     string = "create"
-	ScopeCreateFile        = "create-file"
-	ScopeSelect            = "select"
-	ScopeGet               = "get"
-	ScopePut               = "put"
-	ScopeDelete            = "delete"
+	ScopeCreateValue string = "create-value"
+	ScopeCreateFile         = "create-file"
+	ScopeSelect             = "select"
+	ScopeGet                = "get"
+	ScopePutValue           = "put-value"
+	ScopePutFile            = "put-file"
+	ScopeDelete             = "delete"
+    ScopeDrop               = "drop"
 )
 
 // get command line arguments
@@ -27,11 +29,14 @@ func Getopts() Secret {
 			},
 		},
 		getopt.SubCommands{
-			ScopeCreate: {
+			ScopeCreateValue: {
 				"create key-value pair as string",
 				getopt.Definitions{
-					{"key|k", "key of a new secret", getopt.Required, ""},
-					{"value|v", "value of a new secret", getopt.Required, ""},
+					{"key|k", "key in secret", getopt.Required, ""},
+					{"value|v", "value in secret", getopt.Required, ""},
+					{"username", "username in secret", getopt.Optional | getopt.ExampleIsDefault, ""},
+					{"uri", "uri in secret", getopt.Optional | getopt.ExampleIsDefault, ""},
+					{"notes|n", "notes of the new secret", getopt.Optional | getopt.ExampleIsDefault, ""},
 				},
 			},
 			ScopeCreateFile: {
@@ -39,13 +44,14 @@ func Getopts() Secret {
 				getopt.Definitions{
 					{"key|k", "key of a new secret", getopt.Required, ""},
 					{"file|f", "file of a new secret", getopt.Required, ""},
+					{"notes|n", "notes of the new secret", getopt.Optional | getopt.ExampleIsDefault, ""},
 				},
 			},
 			ScopeSelect: {
 				"select secrets",
 				getopt.Definitions{
-                    {"organization|s", "organization id", getopt.Optional | getopt.ExampleIsDefault, ""},
-                },
+					{"organization|o", "organization id", getopt.Optional | getopt.ExampleIsDefault, ""},
+				},
 			},
 			ScopeGet: {
 				"get secret by key",
@@ -53,17 +59,34 @@ func Getopts() Secret {
 					{"key|k", "key of a new secret", getopt.Required, ""},
 				},
 			},
-			ScopePut: {
+			ScopePutValue: {
 				"put secret by key",
 				getopt.Definitions{
-					{"key|k", "key of a new secret", getopt.Required, ""},
-					{"value|v", "value of a new secret", getopt.Required, ""},
+					{"key|k", "key in secret", getopt.Required, ""},
+					{"value|v", "value in secret", getopt.Required, ""},
+					{"username", "username in secret", getopt.Optional | getopt.ExampleIsDefault, ""},
+					{"uri", "uri in secret", getopt.Optional | getopt.ExampleIsDefault, ""},
+					{"notes|n", "notes of the new secret", getopt.Optional | getopt.ExampleIsDefault, ""},
+				},
+			},
+			ScopePutFile: {
+				"put secret by key",
+				getopt.Definitions{
+					{"key|k", "key in secret", getopt.Required, ""},
+					{"value|v", "value in secret", getopt.Required, ""},
+					{"notes|n", "notes of the new secret", getopt.Optional | getopt.ExampleIsDefault, ""},
 				},
 			},
 			ScopeDelete: {
 				"delete secret by key",
 				getopt.Definitions{
 					{"key|k", "key of a new secret", getopt.Required, ""},
+				},
+			},
+			ScopeDrop: {
+				"drop secrets table",
+				getopt.Definitions{
+					{"organization|o", "organization id", getopt.Optional | getopt.ExampleIsDefault, ""},
 				},
 			},
 		},
@@ -94,7 +117,7 @@ func Getopts() Secret {
 	//fmt.Printf("options: %#v\n", options)
 	var request Secret
 	request.Scope = scope
-    log.Println(scope)
+	log.Println(scope)
 	for k, v := range options {
 		//log.Println(k, v.String)
 		switch {
@@ -102,6 +125,12 @@ func Getopts() Secret {
 			request.Key = v.String
 		case k == "value":
 			request.Value = v.String
+		case k == "username":
+			request.Username = v.String
+		case k == "uri":
+			request.Uri = v.String
+		case k == "notes":
+			request.Notes = v.String
 		case k == "file":
 			request.Filepath = v.String
 		}

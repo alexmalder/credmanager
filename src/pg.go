@@ -11,9 +11,14 @@ import (
 
 // secret in database data structure
 type Secret struct {
-	Scope    string
+	// base fields
 	Key      string
 	Value    string
+	Username string
+	Uri      string
+	Notes    string
+	// helper fields
+	Scope    string
 	Filepath string
 	Conf     Config
 	Conn     *pgx.Conn
@@ -40,51 +45,55 @@ func (s Secret) Migrate() {
 	for _, v := range s.Conf.Queries {
 		_, err := s.Conn.Exec(context.Background(), v.Query)
 		//log.Println(v)
-		if err != nil {
-			log.Fatal(err)
-		}
+		checkErr(err)
 	}
 }
 
 // save the current secret by value
-func (s Secret) Save() {
-	// log.Println(s.Conf.InsertSecret, s.Key, s.Value)
+func (s Secret) SaveValue() {
+	fmt.Println(s.Conf.InsertSecret, s.Key, s.Value, s.Username, s.Uri, s.Notes)
 	// get encrypted data
-	encValue, err := EncTest(s.Value)
-	if err != nil {
-		log.Fatal(err)
-	}
-	_, err = s.Conn.Exec(context.Background(), s.Conf.InsertSecret, s.Key, encValue)
-	if err != nil {
-		log.Fatal("Save ", err)
-	}
+	encValue := EncryptString(s.Value)
+	_, err := s.Conn.Exec(
+		context.Background(),
+		s.Conf.InsertSecret,
+		s.Key,
+		encValue,
+		s.Username,
+		s.Uri,
+		s.Notes,
+        "value",
+	)
+    log.Println(s.Key)
+	checkErr(err)
 }
 
 // save the current secret by filename
 func (s Secret) SaveFile() {
 	rawData := FileAsString(s.Filepath)
-	encValue, err := EncTest(rawData)
-	if err != nil {
-		log.Fatal(err)
-	}
-	_, err = s.Conn.Exec(context.Background(), s.Conf.InsertSecret, s.Key, encValue)
-	if err != nil {
-		log.Fatal("Save ", err)
-	}
+	encValue := EncryptString(rawData)
+	_, err := s.Conn.Exec(
+        context.Background(), 
+        s.Conf.InsertSecret, 
+		s.Key,
+		encValue,
+		s.Username,
+		s.Uri,
+		s.Notes,
+        "file",
+    )
+	checkErr(err)
 }
 
 // select secret by key
 func (s Secret) Get() error {
 	rows, _ := s.Conn.Query(context.Background(), s.Conf.SelectSecret, s.Key)
 	for rows.Next() {
-		err := rows.Scan(&s.Key, &s.Value)
+		err := rows.Scan(&s.Key, &s.Value, &s.Username, &s.Uri, &s.Notes)
 		if err != nil {
 			return err
 		}
-		decStr, err := DecTest(s.Value)
-		if err != nil {
-			log.Fatal(err)
-		}
+		decStr := DecryptString(s.Value)
 		fmt.Printf("Key: %s\n", s.Key)
 		fmt.Printf("Value: %s\n", decStr)
 		fmt.Printf("---\n")
@@ -96,10 +105,8 @@ func (s Secret) Get() error {
 func (s Secret) Select() error {
 	rows, _ := s.Conn.Query(context.Background(), s.Conf.SelectSecrets)
 	for rows.Next() {
-		err := rows.Scan(&s.Key, &s.Value)
-		if err != nil {
-			return err
-		}
+		err := rows.Scan(&s.Key, &s.Value, &s.Username, &s.Uri, &s.Notes)
+		checkErr(err)
 		fmt.Printf("Key: %s\n", s.Key)
 		fmt.Printf("Value: %s...\n", s.Value[0:15])
 		fmt.Printf("---\n")
@@ -108,15 +115,44 @@ func (s Secret) Select() error {
 }
 
 // put secret value by key
-func (s Secret) Update() error {
-	_, err := s.Conn.Exec(context.Background(), s.Conf.DeleteSecret, s.Key, s.Value)
+func (s Secret) UpdateValue() error {
+	encValue := EncryptString(s.Value)
+	_, err := s.Conn.Exec(
+        context.Background(), 
+        s.Conf.DeleteSecret, 
+		s.Key,
+		encValue,
+		s.Username,
+		s.Uri,
+		s.Notes,
+    )
+	return err
+}
+
+// put secret file by key
+func (s Secret) UpdateFile() error {
+	rawData := FileAsString(s.Filepath)
+	encValue := EncryptString(rawData)
+	_, err := s.Conn.Exec(
+        context.Background(), 
+        s.Conf.DeleteSecret, 
+		s.Key,
+		encValue,
+		s.Username,
+		s.Uri,
+		s.Notes,
+    )
 	return err
 }
 
 // remove secret by key
 func (s Secret) Remove() {
 	_, err := s.Conn.Exec(context.Background(), s.Conf.DeleteSecret, s.Key)
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkErr(err)
+}
+
+// drop secrets table
+func (s Secret) Drop() {
+	_, err := s.Conn.Exec(context.Background(), s.Conf.DropSecrets)
+	checkErr(err)
 }

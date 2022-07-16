@@ -26,69 +26,50 @@ func FileAsString(path string) string {
 }
 
 // read keyring from file, public or private
-func readKeyring(keyring string) (openpgp.EntityList, error) {
+func readKeyring(keyring string) openpgp.EntityList {
 	// Read in public key
 	keyringFileBuffer, err := os.Open(keyring)
-	if err != nil {
-		return nil, err
-	}
+	checkErr(err)
 	defer keyringFileBuffer.Close()
 	entityList, err := openpgp.ReadKeyRing(keyringFileBuffer)
-	if err != nil {
-		return nil, err
-	}
-	return entityList, nil
+	checkErr(err)
+	return entityList
 }
 
 // encode function
-func EncTest(secretString string) (string, error) {
-	log.Printf("Secret to hide: \n%s", secretString)
-	log.Printf("Public Keyring: %s", gpghomedir+"pubring.gpg")
-
+func EncryptString(secretString string) string {
+	//log.Printf("Secret to hide: \n%s", secretString)
+	//log.Printf("Public Keyring: %s", gpghomedir+"pubring.gpg")
 	// Read in public key
-	entityList, err := readKeyring(gpghomedir + "pubring.gpg")
-
+	entityList := readKeyring(gpghomedir + "pubring.gpg")
 	// encrypt string
 	buf := new(bytes.Buffer)
 	w, err := openpgp.Encrypt(buf, entityList, nil, nil, nil)
-	if err != nil {
-		return "", err
-	}
+	checkErr(err)
 	_, err = w.Write([]byte(secretString))
-	if err != nil {
-		return "", err
-	}
+	checkErr(err)
 	err = w.Close()
-	if err != nil {
-		return "", err
-	}
-
+	checkErr(err)
 	// Encode to base64
 	bytes, err := ioutil.ReadAll(buf)
-	if err != nil {
-		return "", err
-	}
+	checkErr(err)
 	encStr := base64.StdEncoding.EncodeToString(bytes)
-
 	// Output encrypted/encoded string
-	log.Println("Encrypted Secret:", encStr)
-
-	return encStr, nil
+	//log.Println("Encrypted Secret:", encStr)
+	return encStr
 }
 
 // decode function
-func DecTest(encString string) (string, error) {
-	log.Println("Secret Keyring:", gpghomedir+"secring.gpg")
-	log.Println("Passphrase:", passphrase)
-
+func DecryptString(encString string) string {
+	//log.Println("Secret Keyring:", gpghomedir+"secring.gpg")
+	//log.Println("Passphrase:", passphrase)
 	// Open the private key file
 	var entity *openpgp.Entity
-	entityList, err := readKeyring(gpghomedir + "secring.gpg")
+	entityList := readKeyring(gpghomedir + "secring.gpg")
 	if len(entityList) != 1 {
-		return "", err
+		log.Fatal("Entity list length is not 1")
 	}
 	entity = entityList[0]
-
 	// Get the passphrase and read the private key.
 	// Have not touched the encrypted string yet
 	passphraseByte := []byte(passphrase)
@@ -101,37 +82,12 @@ func DecTest(encString string) (string, error) {
 
 	// Decode the base64 string
 	dec, err := base64.StdEncoding.DecodeString(encString)
-	if err != nil {
-		return "", err
-	}
-
+	checkErr(err)
 	// Decrypt it with the contents of the private key
 	md, err := openpgp.ReadMessage(bytes.NewBuffer(dec), entityList, nil, nil)
-	if err != nil {
-		return "", err
-	}
+	checkErr(err)
 	bytes, err := ioutil.ReadAll(md.UnverifiedBody)
-	if err != nil {
-		return "", err
-	}
+	checkErr(err)
 	decStr := string(bytes)
-
-	return decStr, nil
-}
-
-// test encode and decode functions
-func TestGPG() {
-	rawData := FileAsString("test.yml")
-	encStr, err := EncTest(rawData)
-	if err != nil {
-		log.Fatal(err)
-	}
-	decStr, err := DecTest(encStr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Decrypted Secret: \n%s", decStr)
-	if rawData == decStr {
-		log.Println("Test successfull")
-	}
+	return decStr
 }

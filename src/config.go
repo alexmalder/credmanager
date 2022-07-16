@@ -17,6 +17,7 @@ type Config struct {
 	SelectSecret  string `yaml:"select_secret"`
 	UpdateSecret  string `yaml:"update_secret"`
 	DeleteSecret  string `yaml:"delete_secret"`
+    DropSecrets string `yaml:"drop_secrets"`
 }
 
 // read config yaml and return Config object

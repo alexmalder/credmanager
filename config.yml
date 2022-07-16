@@ -1,14 +1,18 @@
 ---
 queries:
   - query: |
-      create table if not exists secrets (
-        id serial primary key,
-        key varchar(255) unique not null,
-        value varchar(4096) not null
+      CREATE TABLE IF NOT EXISTS secrets (
+        key VARCHAR(255) PRIMARY KEY UNIQUE NOT NULL,
+        value VARCHAR(4096) NOT NULL,
+        username VARCHAR(255),
+        uri VARCHAR(1024),
+        notes VARCHAR(4096),
+        type VARCHAR(8)
       )
-# single queries
-insert_secret: insert into secrets (key, value) values($1, $2) returning id
-delete_secret: delete from secrets where id=$1
-select_secrets: select key, value from secrets
-select_secret: select key, value from secrets where key=$1
-update_secret: update secrets set key=$1, value=$2 where id=$3
+# inline queries
+insert_secret: INSERT INTO secrets (key, value, username, uri, notes, type) VALUES($1, $2, $3, $4, $5, $6)
+delete_secret: DELETE FROM secrets WHERE key=$1
+select_secrets: SELECT key, value, username, uri, notes FROM secrets
+select_secret: SELECT key, value, username, uri, notes FROM secrets WHERE key=$1
+update_secret: UPDATE secrets SET value=$2, username=$3, uri=$4, notes=$5 WHERE key=$1
+drop_secrets: DROP TABLE secrets
