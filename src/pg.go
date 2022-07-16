@@ -108,8 +108,6 @@ func (s Secret) Select() error {
 		err := rows.Scan(&s.Key, &s.Value, &s.Username, &s.Uri, &s.Notes)
 		checkErr(err)
 		fmt.Printf("Key: %s\n", s.Key)
-		fmt.Printf("Value: %s...\n", s.Value[0:15])
-		fmt.Printf("---\n")
 	}
 	return rows.Err()
 }
