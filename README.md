@@ -52,6 +52,8 @@ Available commands:
 
 - `GPG_HOMEDIR`: path for a gpg directories
 - `GPG_PASSPHRASE`: gpg passphrase
+- `GPG_SECRING`: gpg secring
+- `GPG_PUBRING`: gpg pubring
 
 ### Postgres
 

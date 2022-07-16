@@ -11,7 +11,9 @@ import (
 )
 
 var (
-	gpghomedir = os.Getenv("GPG_HOMEDIR") + "/"
+	gpghomedir = os.Getenv("GPG_HOMEDIR")
+	gpgsecring = os.Getenv("GPG_SECRING")
+	gpgpubring = os.Getenv("GPG_PUBRING")
 	passphrase = os.Getenv("GPG_PASSPHRASE")
 )
 
@@ -39,9 +41,8 @@ func readKeyring(keyring string) openpgp.EntityList {
 // encode function
 func EncryptString(secretString string) string {
 	//log.Printf("Secret to hide: \n%s", secretString)
-	//log.Printf("Public Keyring: %s", gpghomedir+"pubring.gpg")
 	// Read in public key
-	entityList := readKeyring(gpghomedir + "pubring.gpg")
+	entityList := readKeyring(gpghomedir + "/" + gpgpubring)
 	// encrypt string
 	buf := new(bytes.Buffer)
 	w, err := openpgp.Encrypt(buf, entityList, nil, nil, nil)
@@ -61,11 +62,10 @@ func EncryptString(secretString string) string {
 
 // decode function
 func DecryptString(encString string) string {
-	//log.Println("Secret Keyring:", gpghomedir+"secring.gpg")
 	//log.Println("Passphrase:", passphrase)
 	// Open the private key file
 	var entity *openpgp.Entity
-	entityList := readKeyring(gpghomedir + "secring.gpg")
+	entityList := readKeyring(gpghomedir + "/" + gpgsecring)
 	if len(entityList) != 1 {
 		log.Fatal("Entity list length is not 1")
 	}
