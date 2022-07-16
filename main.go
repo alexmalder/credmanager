@@ -8,15 +8,7 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-func main() {
-	secret := src.Getopts()
-	connection, err := pgx.Connect(context.Background(), src.ConnectionString())
-	if err != nil {
-		log.Fatal("pgx.Connect", err)
-	}
-	secret.Conn = connection
-	secret.Conf = src.ReadConfig()
-	secret.Migrate()
+func seed(secret src.Secret) {
 	payload := src.ReadJson()
 	for _, v := range payload {
 		secret.Key = v.Name
@@ -32,6 +24,17 @@ func main() {
 		}
         //secret.SaveValue()
 	}
+}
+
+func main() {
+	secret := src.Getopts()
+	connection, err := pgx.Connect(context.Background(), src.ConnectionString())
+	if err != nil {
+		log.Fatal("pgx.Connect", err)
+	}
+	secret.Conn = connection
+	secret.Conf = src.ReadConfig()
+	secret.Migrate()
 	switch {
 	case secret.Scope == src.ScopeCreateValue:
 		secret.SaveValue()
