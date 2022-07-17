@@ -13,3 +13,6 @@ test:
 	./credmanager put-value -k postgres_user --value postgres_pswd
 	./credmanager put-value -k postgres_user --username postgres
 	./credmanager put-value -k postgres_user --username postgres_u
+
+drop:
+	go run main.go drop

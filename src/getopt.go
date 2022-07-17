@@ -16,6 +16,7 @@ const (
 	ScopePutValue               = "put-value"
 	ScopePutFile                = "put-file"
 	ScopeDrop                   = "drop"
+	ScopeMigrate                = "migrate"
 	ScopeImportBitwarden        = "import-bitwarden"
 	TypeFile                    = "file"
 	TypeValue                   = "value"
@@ -50,8 +51,8 @@ func Getopts() SecretCtx {
 			ScopeCreateFile: {
 				"create key-value secret as file",
 				getopt.Definitions{
-					{"key|k", "key of a new secret", getopt.Required, ""},
-					{"file|f", "file of a new secret", getopt.Required, ""},
+					{"key|k", "key of the new secret", getopt.Required, ""},
+					{"file|f", "file of the new secret", getopt.Required, ""},
 					{"notes|n", "notes of the new secret", getopt.Optional | getopt.ExampleIsDefault, ""},
 				},
 			},
@@ -83,6 +84,10 @@ func Getopts() SecretCtx {
 					{"value|v", "value of the secret", getopt.Required, ""},
 					{"notes|n", "notes of the secret", getopt.Optional | getopt.ExampleIsDefault, ""},
 				},
+			},
+			ScopeMigrate: {
+				"create tables if does not exists",
+				getopt.Definitions{},
 			},
 			ScopeDrop: {
 				"drop secrets table",
@@ -121,17 +126,17 @@ func Getopts() SecretCtx {
 		//log.Println(k, v.String)
 		switch {
 		case k == "key":
-			request.cliSecret.Key = v.String
+			request.CliSecret.Key = v.String
 		case k == "value":
-			request.cliSecret.Value = v.String
+			request.CliSecret.Value = v.String
 		case k == "username":
-			request.cliSecret.Username = v.String
+			request.CliSecret.Username = v.String
 		case k == "uri":
-			request.cliSecret.Uri = v.String
+			request.CliSecret.Uri = v.String
 		case k == "notes":
-			request.cliSecret.Notes = v.String
+			request.CliSecret.Notes = v.String
 		case k == "is_deleted":
-			request.cliSecret.IsDeleted = v.Bool
+			request.CliSecret.IsDeleted = v.Bool
 		case k == "file":
 			request.Filepath = v.String
 		}
