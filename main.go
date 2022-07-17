@@ -27,7 +27,6 @@ func main() {
 	case ctx.Scope == src.ScopeSelect:
 		ctx.Select()
 	case ctx.Scope == src.ScopeGet:
-		log.Println(ctx.Scope, ctx.Key)
 		ctx.Get()
 	case ctx.Scope == src.ScopePutValue:
 		ctx.UpdateValue()

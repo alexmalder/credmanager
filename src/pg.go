@@ -90,8 +90,9 @@ func (s SecretCtx) Select() error {
 	var secrets []*Secret
 	err := pgxscan.Select(ctx, s.Pool, &secrets, s.Conf.SelectSecrets)
 	for _, v := range secrets {
-		log.Println(v.Key)
+		fmt.Printf("- [ %s ]\n", v.Key)
 	}
+    fmt.Printf("- Total items: [ %v ]\n", len(secrets))
 	checkErr(err)
 	return err
 }

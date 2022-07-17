@@ -21,9 +21,8 @@ gpg --no-default-keyring --homedir $GPG_HOMEDIR/ --export > $GPG_HOMEDIR/pubring
 ## Example usage
 
 ```bash
-$ go run main.go --help
-
-Usage: main [-c <config>]
+$ go run main.go
+2022/07/17 03:38:33 Usage: main [-c <config>]
 
 global description
 
@@ -32,11 +31,12 @@ Options:
     -h, --help              usage (-h) / detailed help text (--help)
 
 Available commands:
-    create-file             create key-value pair as file
-    create-value            create key-value pair as string
+    create-file             create key-value secret as file
+    create-value            create key-value secret as value
     delete                  delete secret by key
     drop                    drop secrets table
     get                     get secret by key
+    import-bitwarden        import bitwarden json file
     put-file                put secret by key
     put-value               put secret by key
     select                  select secrets

@@ -35,11 +35,11 @@ func Getopts() SecretCtx {
 			ScopeImportBitwarden: {
 				"import bitwarden json file",
 				getopt.Definitions{
-					{"file|f", "file of a new secret", getopt.Required, ""},
+					{"file|f", "file of a bitwarden json backup", getopt.Required, ""},
 				},
 			},
 			ScopeCreateValue: {
-				"create key-value pair as string",
+				"create key-value secret as value",
 				getopt.Definitions{
 					{"key|k", "key in secret", getopt.Required, ""},
 					{"value|v", "value in secret", getopt.Required, ""},
@@ -49,7 +49,7 @@ func Getopts() SecretCtx {
 				},
 			},
 			ScopeCreateFile: {
-				"create key-value pair as file",
+				"create key-value secret as file",
 				getopt.Definitions{
 					{"key|k", "key of a new secret", getopt.Required, ""},
 					{"file|f", "file of a new secret", getopt.Required, ""},
@@ -58,9 +58,7 @@ func Getopts() SecretCtx {
 			},
 			ScopeSelect: {
 				"select secrets",
-				getopt.Definitions{
-					{"organization|o", "organization id", getopt.Optional | getopt.ExampleIsDefault, ""},
-				},
+				getopt.Definitions{},
 			},
 			ScopeGet: {
 				"get secret by key",
@@ -71,32 +69,30 @@ func Getopts() SecretCtx {
 			ScopePutValue: {
 				"put secret by key",
 				getopt.Definitions{
-					{"key|k", "key in secret", getopt.Required, ""},
-					{"value|v", "value in secret", getopt.Required, ""},
-					{"username", "username in secret", getopt.Optional | getopt.ExampleIsDefault, ""},
-					{"uri", "uri in secret", getopt.Optional | getopt.ExampleIsDefault, ""},
-					{"notes|n", "notes of the new secret", getopt.Optional | getopt.ExampleIsDefault, ""},
+					{"key|k", "key of the secret", getopt.Required, ""},
+					{"value|v", "value of the secret", getopt.Required, ""},
+					{"username", "username of the secret", getopt.Optional | getopt.ExampleIsDefault, ""},
+					{"uri", "uri of the secret", getopt.Optional | getopt.ExampleIsDefault, ""},
+					{"notes|n", "notes of the secret", getopt.Optional | getopt.ExampleIsDefault, ""},
 				},
 			},
 			ScopePutFile: {
 				"put secret by key",
 				getopt.Definitions{
-					{"key|k", "key in secret", getopt.Required, ""},
-					{"value|v", "value in secret", getopt.Required, ""},
-					{"notes|n", "notes of the new secret", getopt.Optional | getopt.ExampleIsDefault, ""},
+					{"key|k", "key of the secret", getopt.Required, ""},
+					{"value|v", "value of the secret", getopt.Required, ""},
+					{"notes|n", "notes of the secret", getopt.Optional | getopt.ExampleIsDefault, ""},
 				},
 			},
 			ScopeDelete: {
 				"delete secret by key",
 				getopt.Definitions{
-					{"key|k", "key of a new secret", getopt.Required, ""},
+					{"key|k", "key of the secret", getopt.Required, ""},
 				},
 			},
 			ScopeDrop: {
 				"drop secrets table",
-				getopt.Definitions{
-					{"organization|o", "organization id", getopt.Optional | getopt.ExampleIsDefault, ""},
-				},
+				getopt.Definitions{},
 			},
 		},
 	}
@@ -126,7 +122,7 @@ func Getopts() SecretCtx {
 	//fmt.Printf("options: %#v\n", options)
 	var request SecretCtx
 	request.Scope = scope
-	log.Println(scope)
+	//log.Println(scope)
 	for k, v := range options {
 		//log.Println(k, v.String)
 		switch {
