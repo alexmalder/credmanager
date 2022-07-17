@@ -9,18 +9,21 @@ import (
 )
 
 const (
-	ScopeCreateValue string = "create-value"
-	ScopeCreateFile         = "create-file"
-	ScopeSelect             = "select"
-	ScopeGet                = "get"
-	ScopePutValue           = "put-value"
-	ScopePutFile            = "put-file"
-	ScopeDelete             = "delete"
-    ScopeDrop               = "drop"
+	ScopeCreateValue     string = "create-value"
+	ScopeCreateFile             = "create-file"
+	ScopeSelect                 = "select"
+	ScopeGet                    = "get"
+	ScopePutValue               = "put-value"
+	ScopePutFile                = "put-file"
+	ScopeDelete                 = "delete"
+	ScopeDrop                   = "drop"
+	ScopeImportBitwarden        = "import-bitwarden"
+	TypeFile                    = "file"
+	TypeValue                   = "value"
 )
 
 // get command line arguments
-func Getopts() Secret {
+func Getopts() SecretCtx {
 	sco := getopt.SubCommandOptions{
 		getopt.Options{
 			"global description",
@@ -29,6 +32,12 @@ func Getopts() Secret {
 			},
 		},
 		getopt.SubCommands{
+			ScopeImportBitwarden: {
+				"import bitwarden json file",
+				getopt.Definitions{
+					{"file|f", "file of a new secret", getopt.Required, ""},
+				},
+			},
 			ScopeCreateValue: {
 				"create key-value pair as string",
 				getopt.Definitions{
@@ -115,7 +124,7 @@ func Getopts() Secret {
 
 	//fmt.Printf("scope: %s\n", scope)
 	//fmt.Printf("options: %#v\n", options)
-	var request Secret
+	var request SecretCtx
 	request.Scope = scope
 	log.Println(scope)
 	for k, v := range options {

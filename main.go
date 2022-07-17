@@ -5,54 +5,38 @@ import (
 	"log"
 	"main/src"
 
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-func seed(secret src.Secret) {
-	payload := src.ReadJson()
-	for _, v := range payload {
-		secret.Key = v.Name
-		secret.Value = v.Login.Password
-		secret.Username = v.Login.Username
-        secret.Notes = src.EncryptString(v.Notes)
-		//fmt.Printf("%s %s %s ", v.Name, v.Login.Username, v.Login.Password)
-		if len(v.Login.Uris) == 1 {
-			for _, u := range v.Login.Uris {
-				//log.Printf("%s", u.Uri)
-				secret.Uri = u.Uri
-			}
-		}
-        //secret.SaveValue()
-	}
-}
-
 func main() {
-	secret := src.Getopts()
-	connection, err := pgx.Connect(context.Background(), src.ConnectionString())
+	ctx := src.Getopts()
+	connection, err := pgxpool.Connect(context.Background(), src.ConnectionString())
 	if err != nil {
 		log.Fatal("pgx.Connect", err)
 	}
-	secret.Conn = connection
-	secret.Conf = src.ReadConfig()
-	secret.Migrate()
+	ctx.Pool = connection
+	ctx.Conf = src.ReadConfig()
+	ctx.Migrate()
 	switch {
-	case secret.Scope == src.ScopeCreateValue:
-		secret.SaveValue()
-	case secret.Scope == src.ScopeCreateFile:
-		secret.SaveFile()
-	case secret.Scope == src.ScopeSelect:
-		secret.Select()
-	case secret.Scope == src.ScopeGet:
-		log.Println(secret.Scope, secret.Key)
-		secret.Get()
-	case secret.Scope == src.ScopePutValue:
-		secret.UpdateValue()
-	case secret.Scope == src.ScopePutFile:
-		secret.UpdateFile()
-	case secret.Scope == src.ScopeDelete:
-		secret.Remove()
-	case secret.Scope == src.ScopeDrop:
-		secret.Drop()
+    case ctx.Scope == src.ScopeImportBitwarden:
+        ctx.ImportBitwarden()
+	case ctx.Scope == src.ScopeCreateValue:
+		ctx.SaveValue()
+	case ctx.Scope == src.ScopeCreateFile:
+		ctx.SaveFile()
+	case ctx.Scope == src.ScopeSelect:
+		ctx.Select()
+	case ctx.Scope == src.ScopeGet:
+		log.Println(ctx.Scope, ctx.Key)
+		ctx.Get()
+	case ctx.Scope == src.ScopePutValue:
+		ctx.UpdateValue()
+	case ctx.Scope == src.ScopePutFile:
+		ctx.UpdateFile()
+	case ctx.Scope == src.ScopeDelete:
+		ctx.Remove()
+	case ctx.Scope == src.ScopeDrop:
+		ctx.Drop()
 	default:
 		log.Println("Scope is not defined")
 	}
