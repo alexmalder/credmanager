@@ -7,12 +7,22 @@ test:
 	./credmanager select
 	./credmanager put-value -k postgres_user
 	./credmanager put-value -k postgres_user --notes my-local-db
+	./credmanager get -k postgres_user
 	./credmanager put-value -k postgres_user --uri 127.0.0.1
 	./credmanager put-value -k postgres_user --uri 127.0.0.2
+	./credmanager get -k postgres_user
 	./credmanager put-value -k postgres_user --value postgres_password
 	./credmanager put-value -k postgres_user --value postgres_pswd
+	./credmanager get -k postgres_user
 	./credmanager put-value -k postgres_user --username postgres
 	./credmanager put-value -k postgres_user --username postgres_u
+	./credmanager get -k postgres_user
+	./credmanager put-value -k postgres_user --is_deleted false
+	./credmanager put-value -k postgres_user --is_deleted true
+	./credmanager get -k postgres_user
+
+migrate:
+	go run main.go migrate
 
 drop:
 	go run main.go drop
