@@ -12,7 +12,7 @@ go build -o credmanager main.go
 ## Hot to generate keys
 
 ```bash
-GPG_HOMEDIR=gpg # directory in gitignore
+export GPG_HOMEDIR=gpg # directory in gitignore
 gpg --expert --full-gen-key --homedir $GPG_HOMEDIR
 gpg --no-default-keyring --homedir $GPG_HOMEDIR/ --export-secret-keys > $GPG_HOMEDIR/secring.gpg
 gpg --no-default-keyring --homedir $GPG_HOMEDIR/ --export > $GPG_HOMEDIR/pubring.gpg
@@ -51,14 +51,10 @@ Available commands:
 | username | VARCHAR(255)  | optional field of a username     |
 | uri      | VARCHAR(1024) | optional field of a uri          |
 | notes    | VARCHAR(4096) | optional field of a notes        |
-| type     | VARCHAR(8)    | "file", "env", "login" or custom |
+| type     | VARCHAR(8)    | "file", "login" or custom        |
 
 
 ## Environment variables
-
-### Bitwarden intergration
-
-- `BITWARDEN_BACKUP_PATH`: path for bitwarden json backup file
 
 ### GPG
 
@@ -75,6 +71,9 @@ Available commands:
 - `POSTGRES_PORT`
 - `POSTGRES_DB`
 
+## TODO
+
+- [ ] update logic
 
 ## Authors
 

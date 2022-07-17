@@ -73,12 +73,12 @@ func DecryptString(encString string) string {
 	// Get the passphrase and read the private key.
 	// Have not touched the encrypted string yet
 	passphraseByte := []byte(passphrase)
-	log.Println("Decrypting private key using passphrase")
+	//log.Println("Decrypting private key using passphrase")
 	entity.PrivateKey.Decrypt(passphraseByte)
 	for _, subkey := range entity.Subkeys {
 		subkey.PrivateKey.Decrypt(passphraseByte)
 	}
-	log.Println("Finished decrypting private key using passphrase")
+	//log.Println("Finished decrypting private key using passphrase")
 
 	// Decode the base64 string
 	dec, err := base64.StdEncoding.DecodeString(encString)

@@ -15,7 +15,6 @@ const (
 	ScopeGet                    = "get"
 	ScopePutValue               = "put-value"
 	ScopePutFile                = "put-file"
-	ScopeDelete                 = "delete"
 	ScopeDrop                   = "drop"
 	ScopeImportBitwarden        = "import-bitwarden"
 	TypeFile                    = "file"
@@ -70,10 +69,11 @@ func Getopts() SecretCtx {
 				"put secret by key",
 				getopt.Definitions{
 					{"key|k", "key of the secret", getopt.Required, ""},
-					{"value|v", "value of the secret", getopt.Required, ""},
+					{"value|v", "value of the secret", getopt.Optional | getopt.ExampleIsDefault, ""},
 					{"username", "username of the secret", getopt.Optional | getopt.ExampleIsDefault, ""},
 					{"uri", "uri of the secret", getopt.Optional | getopt.ExampleIsDefault, ""},
 					{"notes|n", "notes of the secret", getopt.Optional | getopt.ExampleIsDefault, ""},
+					{"is_deleted|d|", "change is_deleted flag", getopt.Optional | getopt.ExampleIsDefault, false},
 				},
 			},
 			ScopePutFile: {
@@ -82,12 +82,6 @@ func Getopts() SecretCtx {
 					{"key|k", "key of the secret", getopt.Required, ""},
 					{"value|v", "value of the secret", getopt.Required, ""},
 					{"notes|n", "notes of the secret", getopt.Optional | getopt.ExampleIsDefault, ""},
-				},
-			},
-			ScopeDelete: {
-				"delete secret by key",
-				getopt.Definitions{
-					{"key|k", "key of the secret", getopt.Required, ""},
 				},
 			},
 			ScopeDrop: {
@@ -127,15 +121,17 @@ func Getopts() SecretCtx {
 		//log.Println(k, v.String)
 		switch {
 		case k == "key":
-			request.Key = v.String
+			request.cliSecret.Key = v.String
 		case k == "value":
-			request.Value = v.String
+			request.cliSecret.Value = v.String
 		case k == "username":
-			request.Username = v.String
+			request.cliSecret.Username = v.String
 		case k == "uri":
-			request.Uri = v.String
+			request.cliSecret.Uri = v.String
 		case k == "notes":
-			request.Notes = v.String
+			request.cliSecret.Notes = v.String
+		case k == "is_deleted":
+			request.cliSecret.IsDeleted = v.Bool
 		case k == "file":
 			request.Filepath = v.String
 		}
