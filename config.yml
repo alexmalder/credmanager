@@ -13,6 +13,7 @@ queries:
       )
   - query: |
       CREATE TABLE IF NOT EXISTS revision (
+        id SERIAL PRIMARY KEY,
         key VARCHAR(255) NOT NULL,
         revision INTEGER NOT NULL,
         value VARCHAR(4096) NOT NULL,
@@ -20,8 +21,7 @@ queries:
         uri VARCHAR(1024),
         notes VARCHAR(4096),
         type VARCHAR(8),
-        is_deleted BOOLEAN DEFAULT FALSE,
-        PRIMARY KEY(key, revision)
+        is_deleted BOOLEAN DEFAULT FALSE
       )
 drops:
   - query: DROP TABLE secrets
