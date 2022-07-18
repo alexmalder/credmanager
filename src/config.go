@@ -12,12 +12,15 @@ type Config struct {
 	Queries []struct {
 		Query string
 	}
-	InsertSecret  string `yaml:"insert_secret"`
-	SelectSecrets string `yaml:"select_secrets"`
-	SelectSecret  string `yaml:"select_secret"`
-	UpdateSecret  string `yaml:"update_secret"`
-	DeleteSecret  string `yaml:"delete_secret"`
-    DropSecrets string `yaml:"drop_secrets"`
+	Drops []struct {
+		Query string
+	}
+	InsertSecret   string `yaml:"insert_secret"`
+	SelectSecrets  string `yaml:"select_secrets"`
+	SelectSecret   string `yaml:"select_secret"`
+	UpdateSecret   string `yaml:"update_secret"`
+	DeleteSecret   string `yaml:"delete_secret"`
+	InsertRevision string `yaml:"insert_revision"`
 }
 
 // read config yaml and return Config object

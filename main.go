@@ -16,24 +16,25 @@ func main() {
 	}
 	ctx.Pool = connection
 	ctx.Conf = src.ReadConfig()
-	ctx.Migrate()
 	switch {
-    case ctx.Scope == src.ScopeImportBitwarden:
-        ctx.ImportBitwarden()
+	case ctx.Scope == src.ScopeMigrate:
+		ctx.Migrate()
+	case ctx.Scope == src.ScopeImportBitwarden:
+		ctx.ImportBitwarden()
 	case ctx.Scope == src.ScopeCreateValue:
-		ctx.SaveValue()
+		ctx.Save(src.TypeValue)
 	case ctx.Scope == src.ScopeCreateFile:
-		ctx.SaveFile()
+		ctx.CliSecret.Value = src.FileAsString(ctx.Filepath)
+		ctx.Save(src.TypeFile)
 	case ctx.Scope == src.ScopeSelect:
 		ctx.Select()
 	case ctx.Scope == src.ScopeGet:
 		ctx.Get()
 	case ctx.Scope == src.ScopePutValue:
-		ctx.UpdateValue()
+		ctx.Update()
 	case ctx.Scope == src.ScopePutFile:
-		ctx.UpdateFile()
-	case ctx.Scope == src.ScopeDelete:
-		ctx.Remove()
+		ctx.CliSecret.Value = src.FileAsString(ctx.Filepath)
+		ctx.Update()
 	case ctx.Scope == src.ScopeDrop:
 		ctx.Drop()
 	default:

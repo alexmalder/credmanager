@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
-	"os"
 )
 
 // The data struct for the decoded data
@@ -25,9 +24,9 @@ type Item struct {
     Notes string `json:"notes"`
 }
 
-func ReadJson() []Item {
+func ReadJson(filepath string) []Item {
 	// Let's first read the `config.json` file
-	content, err := ioutil.ReadFile(os.Getenv("BITWARDEN_BACKUP_PATH"))
+	content, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		log.Fatal("Error when opening file: ", err)
 	}

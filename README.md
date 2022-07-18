@@ -12,7 +12,7 @@ go build -o credmanager main.go
 ## Hot to generate keys
 
 ```bash
-GPG_HOMEDIR=gpg # directory in gitignore
+export GPG_HOMEDIR=gpg # directory in gitignore
 gpg --expert --full-gen-key --homedir $GPG_HOMEDIR
 gpg --no-default-keyring --homedir $GPG_HOMEDIR/ --export-secret-keys > $GPG_HOMEDIR/secring.gpg
 gpg --no-default-keyring --homedir $GPG_HOMEDIR/ --export > $GPG_HOMEDIR/pubring.gpg
@@ -21,8 +21,8 @@ gpg --no-default-keyring --homedir $GPG_HOMEDIR/ --export > $GPG_HOMEDIR/pubring
 ## Example usage
 
 ```bash
-$ go run main.go
-2022/07/17 03:38:33 Usage: main [-c <config>]
+go run main.go --help
+Usage: main [-c <config>]
 
 global description
 
@@ -33,10 +33,10 @@ Options:
 Available commands:
     create-file             create key-value secret as file
     create-value            create key-value secret as value
-    delete                  delete secret by key
     drop                    drop secrets table
     get                     get secret by key
     import-bitwarden        import bitwarden json file
+    migrate                 create tables if does not exists
     put-file                put secret by key
     put-value               put secret by key
     select                  select secrets
@@ -44,21 +44,19 @@ Available commands:
 
 ## Database table structure
 
-| Field    | Type          | Note                             |
-| -------- | ------------- | -------------------------------- |
-| key      | VARCHAR(255)  | key of a secret                  | 
-| value    | VARCHAR(4096) | value of a secret                | 
-| username | VARCHAR(255)  | optional field of a username     |
-| uri      | VARCHAR(1024) | optional field of a uri          |
-| notes    | VARCHAR(4096) | optional field of a notes        |
-| type     | VARCHAR(8)    | "file", "env", "login" or custom |
+| Field      | Type          | Note                             |
+| ---------- | ------------- | -------------------------------- |
+| key        | VARCHAR(255)  | key of a secret                  | 
+| revision   | INTEGER       | number of revision               | 
+| value      | VARCHAR(4096) | value of a secret                | 
+| username   | VARCHAR(255)  | optional field of a username     |
+| uri        | VARCHAR(1024) | optional field of a uri          |
+| notes      | VARCHAR(4096) | optional field of a notes        |
+| type       | VARCHAR(8)    | "file", "login" or custom        |
+| is_deleted | BOOLEAN       | set `is_deleted` for hiding      |
 
 
 ## Environment variables
-
-### Bitwarden intergration
-
-- `BITWARDEN_BACKUP_PATH`: path for bitwarden json backup file
 
 ### GPG
 
@@ -75,6 +73,10 @@ Available commands:
 - `POSTGRES_PORT`
 - `POSTGRES_DB`
 
+## TODO
+
+- [ ] update keyring
+- [ ] restore version
 
 ## Authors
 

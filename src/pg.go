@@ -12,25 +12,29 @@ import (
 
 // secret in database data structure
 type Secret struct {
-	Key      string
-	Value    string
-	Username string
-	Uri      string
-	Notes    string
+	Key       string
+	Revision  int
+	Value     string
+	Username  string
+	Uri       string
+	Notes     string
+	Type      string
+	IsDeleted bool
 }
 
 type SecretCtx struct {
-	Secret
-	Scope    string
-	Filepath string
-	Conf     Config
-	Pool     *pgxpool.Pool
+	CliSecret Secret
+	DbSecret  Secret
+	Scope     string
+	Filepath  string
+	Conf      Config
+	Pool      *pgxpool.Pool
 }
 
 var ctx = context.Background()
 
 // print the current secret helper function
-func (s Secret) Print() {
+func (s *Secret) Print() {
 	fmt.Println(s)
 }
 
@@ -47,7 +51,7 @@ func ConnectionString() string {
 }
 
 // make database migrations
-func (s SecretCtx) Migrate() {
+func (s *SecretCtx) Migrate() {
 	for _, v := range s.Conf.Queries {
 		_, err := s.Pool.Exec(context.Background(), v.Query)
 		//log.Println(v)
@@ -56,89 +60,150 @@ func (s SecretCtx) Migrate() {
 }
 
 // save the current secret by value
-func (s SecretCtx) SaveValue() {
-	fmt.Println(s.Conf.InsertSecret, s.Key, s.Value, s.Username, s.Uri, s.Notes)
-	// get encrypted data
-	encValue := EncryptString(s.Value)
-	_, err := s.Pool.Exec(ctx, s.Conf.InsertSecret, s.Key, encValue, s.Username, s.Uri, s.Notes, TypeValue)
-	log.Println(s.Key)
+func (s *SecretCtx) Save(recordType string) {
+	encValue := EncryptString(s.CliSecret.Value)
+	encNotes := EncryptString(s.CliSecret.Notes)
+	s.CliSecret.Type = recordType
+	_, err := s.Pool.Exec(
+		ctx,
+		s.Conf.InsertSecret,
+		s.CliSecret.Key,
+		1,
+		encValue,
+		s.CliSecret.Username,
+		s.CliSecret.Uri,
+		encNotes,
+		s.CliSecret.Type,
+	)
+	//log.Println(s.CliSecret.Key)
 	checkErr(err)
-}
-
-// save the current secret by filename
-func (s SecretCtx) SaveFile() {
-	rawData := FileAsString(s.Filepath)
-	encValue := EncryptString(rawData)
-	_, err := s.Pool.Exec(ctx, s.Conf.InsertSecret, s.Key, encValue, s.Username, s.Uri, s.Notes, TypeFile)
-	checkErr(err)
-}
-
-// select secret by key
-func (s SecretCtx) Get() error {
-	//var secret Secret
-	err := pgxscan.Get(ctx, s.Pool, &s, s.Conf.SelectSecret, s.Key)
-	checkErr(err)
-	decStr := DecryptString(s.Value)
-	fmt.Printf("Key: %s\n", s.Key)
-	fmt.Printf("Value: %s\n", decStr)
-	fmt.Printf("---\n")
-	return err
+	s.WriteRevision()
 }
 
 // select secret by key
-func (s SecretCtx) Select() error {
+func (s *SecretCtx) Select() {
 	var secrets []*Secret
 	err := pgxscan.Select(ctx, s.Pool, &secrets, s.Conf.SelectSecrets)
 	for _, v := range secrets {
 		fmt.Printf("- [ %s ]\n", v.Key)
 	}
-    fmt.Printf("- Total items: [ %v ]\n", len(secrets))
+	fmt.Printf("- Total items: [ %v ]\n", len(secrets))
 	checkErr(err)
-	return err
+}
+
+// select secret by key
+func (s *SecretCtx) Get() {
+	err := pgxscan.Get(ctx, s.Pool, &s.DbSecret, s.Conf.SelectSecret, s.CliSecret.Key)
+	checkErr(err)
+	s.DbSecret.Value = DecryptString(s.DbSecret.Value)
+	s.DbSecret.Notes = DecryptString(s.DbSecret.Notes)
+	fmt.Printf(
+		"- [ %s, %s, %s, %s, %s, %v ]\n",
+		s.DbSecret.Key,
+		s.DbSecret.Value,
+		s.DbSecret.Username,
+		s.DbSecret.Uri,
+		s.DbSecret.Notes,
+		s.DbSecret.Revision,
+	)
 }
 
 // put secret value by key
-func (s SecretCtx) UpdateValue() error {
-	encValue := EncryptString(s.Value)
-	encNotes := EncryptString(s.Notes)
-	_, err := s.Pool.Exec(ctx, s.Conf.DeleteSecret, s.Key, encValue, s.Username, s.Uri, encNotes)
-	return err
+func (s *SecretCtx) Update() {
+	s.Get()
+	log.Printf("Change secret revision from [%v] to [%v]\n", s.DbSecret.Revision, s.DbSecret.Revision+1)
+	log.Println("Notes ", s.CliSecret.Notes, s.DbSecret.Notes)
+	if s.CliSecret.Key != s.DbSecret.Key {
+		log.Printf("Changed key from [%s] to [%s]\n", s.DbSecret.Key, s.CliSecret.Key)
+		s.DbSecret.Key = s.CliSecret.Key
+	}
+
+	if s.CliSecret.Value != "" && s.CliSecret.Value != s.DbSecret.Value {
+		log.Printf("Changed value from [%s] to [%s]\n", s.DbSecret.Value, s.CliSecret.Value)
+		s.DbSecret.Value = s.CliSecret.Value
+	}
+
+	if s.CliSecret.Username != "" && s.CliSecret.Username != s.DbSecret.Username {
+		log.Printf("Changed username from [%s] to [%s]\n", s.DbSecret.Username, s.CliSecret.Username)
+		s.DbSecret.Username = s.CliSecret.Username
+	}
+
+	if s.CliSecret.Uri != "" && s.CliSecret.Uri != s.DbSecret.Uri {
+		log.Printf("Changed uri from [%s] to [%s]\n", s.DbSecret.Uri, s.CliSecret.Uri)
+		s.DbSecret.Uri = s.CliSecret.Uri
+	}
+
+	if s.CliSecret.Notes != "" && s.CliSecret.Notes != s.DbSecret.Notes {
+		log.Printf("Changed notes from [%s] to [%s]\n", s.DbSecret.Notes, s.CliSecret.Notes)
+		s.DbSecret.Notes = s.CliSecret.Notes
+	}
+
+	if s.CliSecret.IsDeleted != s.DbSecret.IsDeleted {
+		log.Printf("Changed is_deleted from [%t] to [%t]\n", s.DbSecret.IsDeleted, s.CliSecret.IsDeleted)
+		s.DbSecret.IsDeleted = s.CliSecret.IsDeleted
+	}
+
+	// get encrypted data
+	encValue := EncryptString(s.DbSecret.Value)
+	encNotes := EncryptString(s.DbSecret.Notes)
+	s.DbSecret.Revision += 1
+	_, err := s.Pool.Exec(
+		ctx,
+		s.Conf.UpdateSecret,
+		s.DbSecret.Key,
+		s.DbSecret.Revision,
+		encValue,
+		s.DbSecret.Username,
+		s.DbSecret.Uri,
+		encNotes,
+		s.DbSecret.IsDeleted,
+	)
+	checkErr(err)
+	s.WriteRevision()
 }
 
-// put secret file by key
-func (s SecretCtx) UpdateFile() error {
-	encValue := EncryptString(FileAsString(s.Filepath))
-	encNotes := EncryptString(s.Notes)
-	_, err := s.Pool.Exec(ctx, s.Conf.DeleteSecret, s.Key, encValue, s.Username, s.Uri, encNotes)
-	return err
-}
-
-// remove secret by key
-func (s SecretCtx) Remove() {
-	_, err := s.Pool.Exec(ctx, s.Conf.DeleteSecret, s.Key)
+func (s *SecretCtx) WriteRevision() {
+	log.Println("s.DbSecret ", s.DbSecret)
+	// get encrypted data
+	encValue := EncryptString(s.DbSecret.Value)
+	encNotes := EncryptString(s.DbSecret.Notes)
+	_, err := s.Pool.Exec(
+		ctx,
+		s.Conf.InsertRevision,
+		s.DbSecret.Key,
+		s.DbSecret.Revision,
+		encValue,
+		s.DbSecret.Username,
+		s.DbSecret.Uri,
+		encNotes,
+		s.DbSecret.Type,
+		s.DbSecret.IsDeleted,
+	)
 	checkErr(err)
 }
 
 // drop secrets table
-func (s SecretCtx) Drop() {
-	_, err := s.Pool.Exec(ctx, s.Conf.DropSecrets)
-	checkErr(err)
+func (s *SecretCtx) Drop() {
+	for _, v := range s.Conf.Drops {
+		_, err := s.Pool.Exec(ctx, v.Query)
+		checkErr(err)
+	}
 }
 
-func (s SecretCtx) ImportBitwarden() {
-	payload := ReadJson()
+func (s *SecretCtx) ImportBitwarden() {
+	payload := ReadJson(s.Filepath)
 	for _, v := range payload {
-		s.Key = v.Name
-		s.Value = v.Login.Password
-		s.Username = v.Login.Username
-		s.Notes = EncryptString(v.Notes)
+		s.CliSecret.Key = v.Name
+		s.CliSecret.Value = v.Login.Password
+		s.CliSecret.Username = v.Login.Username
+		s.CliSecret.Notes = v.Notes
 		//fmt.Printf("%s %s %s ", v.Name, v.Login.Username, v.Login.Password)
 		if len(v.Login.Uris) == 1 {
 			for _, u := range v.Login.Uris {
 				//log.Printf("%s", u.Uri)
-				s.Uri = u.Uri
+				s.CliSecret.Uri = u.Uri
 			}
 		}
-		s.SaveValue()
+		s.Save(TypeValue)
 	}
 }

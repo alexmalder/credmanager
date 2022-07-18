@@ -2,17 +2,33 @@
 queries:
   - query: |
       CREATE TABLE IF NOT EXISTS secrets (
-        key VARCHAR(255) PRIMARY KEY UNIQUE NOT NULL,
+        key VARCHAR(255) UNIQUE PRIMARY KEY NOT NULL,
+        revision INTEGER NOT NULL,
         value VARCHAR(4096) NOT NULL,
         username VARCHAR(255),
         uri VARCHAR(1024),
         notes VARCHAR(4096),
-        type VARCHAR(8)
+        type VARCHAR(8),
+        is_deleted BOOLEAN DEFAULT FALSE
       )
+  - query: |
+      CREATE TABLE IF NOT EXISTS revision (
+        key VARCHAR(255) NOT NULL,
+        revision INTEGER NOT NULL,
+        value VARCHAR(4096) NOT NULL,
+        username VARCHAR(255),
+        uri VARCHAR(1024),
+        notes VARCHAR(4096),
+        type VARCHAR(8),
+        is_deleted BOOLEAN DEFAULT FALSE,
+        PRIMARY KEY(key, revision)
+      )
+drops:
+  - query: DROP TABLE secrets
+  - query: DROP TABLE revision
 # inline queries
-insert_secret: INSERT INTO secrets (key, value, username, uri, notes, type) VALUES($1, $2, $3, $4, $5, $6)
-delete_secret: DELETE FROM secrets WHERE key=$1
-select_secrets: SELECT key, value, username, uri, notes FROM secrets
-select_secret: SELECT key, value, username, uri, notes FROM secrets WHERE key=$1
-update_secret: UPDATE secrets SET value=$2, username=$3, uri=$4, notes=$5 WHERE key=$1
-drop_secrets: DROP TABLE secrets
+insert_secret: INSERT INTO secrets (key, revision, value, username, uri, notes, type) VALUES($1, $2, $3, $4, $5, $6, $7)
+select_secrets: SELECT * FROM secrets WHERE is_deleted=false
+select_secret: SELECT * FROM secrets WHERE key=$1 and is_deleted=false
+update_secret: UPDATE secrets SET revision=$2, value=$3, username=$4, uri=$5, notes=$6, is_deleted=$7 WHERE key=$1
+insert_revision: INSERT INTO revision (key, revision, value, username, uri, notes, type, is_deleted) VALUES($1, $2, $3, $4, $5, $6, $7, $8)
