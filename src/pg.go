@@ -24,6 +24,7 @@ type Secret struct {
 
 type SecretCtx struct {
 	CliSecret Secret
+	DbSecret  Secret
 	Scope     string
 	Filepath  string
 	Conf      Config
@@ -60,13 +61,8 @@ func (s *SecretCtx) Migrate() {
 
 // save the current secret by value
 func (s *SecretCtx) Save(recordType string) {
-	// get encrypted data
 	encValue := EncryptString(s.CliSecret.Value)
-	var encNotes string
-	//log.Println(s.CliSecret.Notes)
-	if s.CliSecret.Notes != "" {
-		encNotes = EncryptString(s.CliSecret.Notes)
-	}
+	encNotes := EncryptString(s.CliSecret.Notes)
 	s.CliSecret.Type = recordType
 	_, err := s.Pool.Exec(
 		ctx,
@@ -96,95 +92,92 @@ func (s *SecretCtx) Select() {
 }
 
 // select secret by key
-func (s *SecretCtx) Get() Secret {
-	var dbs Secret
-	err := pgxscan.Get(ctx, s.Pool, &dbs, s.Conf.SelectSecret, s.CliSecret.Key)
+func (s *SecretCtx) Get() {
+	err := pgxscan.Get(ctx, s.Pool, &s.DbSecret, s.Conf.SelectSecret, s.CliSecret.Key)
 	checkErr(err)
-	dbs.Value = DecryptString(dbs.Value)
-	if dbs.Notes != "" {
-		dbs.Notes = DecryptString(dbs.Notes)
-	}
-	fmt.Printf("- [ %s, %s, %s, %s, %s, %v ]\n", dbs.Key, dbs.Value, dbs.Username, dbs.Uri, dbs.Notes, dbs.Revision)
-	return dbs
+	s.DbSecret.Value = DecryptString(s.DbSecret.Value)
+	s.DbSecret.Notes = DecryptString(s.DbSecret.Notes)
+	fmt.Printf(
+		"- [ %s, %s, %s, %s, %s, %v ]\n",
+		s.DbSecret.Key,
+		s.DbSecret.Value,
+		s.DbSecret.Username,
+		s.DbSecret.Uri,
+		s.DbSecret.Notes,
+		s.DbSecret.Revision,
+	)
 }
 
 // put secret value by key
 func (s *SecretCtx) Update() {
-	dbSecret := s.Get()
-	//fmt.Print(dbSecret)
-	log.Printf("Change secret revision from [%v] to [%v]\n", dbSecret.Revision, dbSecret.Revision+1)
-	switch {
-	case s.CliSecret.Key != dbSecret.Key:
-		log.Printf("Changed key from [%s] to [%s]\n", dbSecret.Key, s.CliSecret.Key)
-		dbSecret.Key = s.CliSecret.Key
-
-	case s.CliSecret.Value != "" && s.CliSecret.Value != dbSecret.Value:
-		log.Printf("Changed value from [%s] to [%s]\n", dbSecret.Value, s.CliSecret.Value)
-		dbSecret.Value = s.CliSecret.Value
-
-	case s.CliSecret.Username != "" && s.CliSecret.Username != dbSecret.Username:
-		log.Printf("Changed username from [%s] to [%s]\n", dbSecret.Username, s.CliSecret.Username)
-		dbSecret.Username = s.CliSecret.Username
-
-	case s.CliSecret.Uri != "" && s.CliSecret.Uri != dbSecret.Uri:
-		log.Printf("Changed uri from [%s] to [%s]\n", dbSecret.Uri, s.CliSecret.Uri)
-		dbSecret.Uri = s.CliSecret.Uri
-
-	case s.CliSecret.Notes != "" && s.CliSecret.Notes != dbSecret.Notes:
-		log.Printf("Changed notes from [%s] to [%s]\n", dbSecret.Notes, s.CliSecret.Notes)
-		dbSecret.Notes = s.CliSecret.Notes
-
-	case s.CliSecret.IsDeleted != dbSecret.IsDeleted:
-		log.Printf("Changed is_deleted from [%t] to [%t]\n", dbSecret.IsDeleted, s.CliSecret.IsDeleted)
-		dbSecret.IsDeleted = s.CliSecret.IsDeleted
-
-	default:
-		//log.Println("No changes")
+	s.Get()
+	log.Printf("Change secret revision from [%v] to [%v]\n", s.DbSecret.Revision, s.DbSecret.Revision+1)
+	log.Println("Notes ", s.CliSecret.Notes, s.DbSecret.Notes)
+	if s.CliSecret.Key != s.DbSecret.Key {
+		log.Printf("Changed key from [%s] to [%s]\n", s.DbSecret.Key, s.CliSecret.Key)
+		s.DbSecret.Key = s.CliSecret.Key
 	}
-	s.CliSecret = dbSecret
+
+	if s.CliSecret.Value != "" && s.CliSecret.Value != s.DbSecret.Value {
+		log.Printf("Changed value from [%s] to [%s]\n", s.DbSecret.Value, s.CliSecret.Value)
+		s.DbSecret.Value = s.CliSecret.Value
+	}
+
+	if s.CliSecret.Username != "" && s.CliSecret.Username != s.DbSecret.Username {
+		log.Printf("Changed username from [%s] to [%s]\n", s.DbSecret.Username, s.CliSecret.Username)
+		s.DbSecret.Username = s.CliSecret.Username
+	}
+
+	if s.CliSecret.Uri != "" && s.CliSecret.Uri != s.DbSecret.Uri {
+		log.Printf("Changed uri from [%s] to [%s]\n", s.DbSecret.Uri, s.CliSecret.Uri)
+		s.DbSecret.Uri = s.CliSecret.Uri
+	}
+
+	if s.CliSecret.Notes != "" && s.CliSecret.Notes != s.DbSecret.Notes {
+		log.Printf("Changed notes from [%s] to [%s]\n", s.DbSecret.Notes, s.CliSecret.Notes)
+		s.DbSecret.Notes = s.CliSecret.Notes
+	}
+
+	if s.CliSecret.IsDeleted != s.DbSecret.IsDeleted {
+		log.Printf("Changed is_deleted from [%t] to [%t]\n", s.DbSecret.IsDeleted, s.CliSecret.IsDeleted)
+		s.DbSecret.IsDeleted = s.CliSecret.IsDeleted
+	}
+
 	// get encrypted data
-	encValue := EncryptString(s.CliSecret.Value)
-	var encNotes string
-	//log.Println(s.CliSecret.Notes)
-	if s.CliSecret.Notes != "" {
-		encNotes = EncryptString(s.CliSecret.Notes)
-	}
-	s.CliSecret.Revision += 1
+	encValue := EncryptString(s.DbSecret.Value)
+	encNotes := EncryptString(s.DbSecret.Notes)
+	s.DbSecret.Revision += 1
 	_, err := s.Pool.Exec(
 		ctx,
 		s.Conf.UpdateSecret,
-		s.CliSecret.Key,
-		s.CliSecret.Revision,
+		s.DbSecret.Key,
+		s.DbSecret.Revision,
 		encValue,
-		s.CliSecret.Username,
-		s.CliSecret.Uri,
+		s.DbSecret.Username,
+		s.DbSecret.Uri,
 		encNotes,
-		s.CliSecret.IsDeleted,
+		s.DbSecret.IsDeleted,
 	)
-	//log.Println(s.CliSecret.Key)
 	checkErr(err)
 	s.WriteRevision()
 }
 
 func (s *SecretCtx) WriteRevision() {
-	log.Println("s.CliSecret ", s.CliSecret)
+	log.Println("s.DbSecret ", s.DbSecret)
 	// get encrypted data
-	encValue := EncryptString(s.CliSecret.Value)
-	var encNotes string
-	if s.CliSecret.Notes != "" {
-		encNotes = EncryptString(s.CliSecret.Notes)
-	}
+	encValue := EncryptString(s.DbSecret.Value)
+	encNotes := EncryptString(s.DbSecret.Notes)
 	_, err := s.Pool.Exec(
 		ctx,
 		s.Conf.InsertRevision,
-		s.CliSecret.Key,
-		s.CliSecret.Revision,
+		s.DbSecret.Key,
+		s.DbSecret.Revision,
 		encValue,
-		s.CliSecret.Username,
-		s.CliSecret.Uri,
+		s.DbSecret.Username,
+		s.DbSecret.Uri,
 		encNotes,
-		s.CliSecret.Type,
-		s.CliSecret.IsDeleted,
+		s.DbSecret.Type,
+		s.DbSecret.IsDeleted,
 	)
 	checkErr(err)
 }
