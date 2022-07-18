@@ -52,38 +52,39 @@ func ConnectionString() string {
 
 // make database migrations
 func (s *SecretCtx) Migrate() {
-	for _, v := range s.Conf.Queries {
-		_, err := s.Pool.Exec(context.Background(), v.Query)
-		//log.Println(v)
-		checkErr(err)
-	}
+	_, err := s.Pool.Exec(ctx, createTableRevision)
+	checkErr(err)
+	_, err = s.Pool.Exec(ctx, createTableSecrets)
+	checkErr(err)
 }
 
 // save the current secret by value
 func (s *SecretCtx) Save(recordType string) {
-	encValue := EncryptString(s.CliSecret.Value)
-	encNotes := EncryptString(s.CliSecret.Notes)
+	s.CliSecret.Value = EncryptString(s.CliSecret.Value)
+	s.CliSecret.Notes = EncryptString(s.CliSecret.Notes)
 	s.CliSecret.Type = recordType
+	s.CliSecret.Revision = 1
 	_, err := s.Pool.Exec(
 		ctx,
-		s.Conf.InsertSecret,
+		insertSecret,
 		s.CliSecret.Key,
-		1,
-		encValue,
+		s.CliSecret.Revision,
+		s.CliSecret.Value,
 		s.CliSecret.Username,
 		s.CliSecret.Uri,
-		encNotes,
+		s.CliSecret.Notes,
 		s.CliSecret.Type,
 	)
 	//log.Println(s.CliSecret.Key)
 	checkErr(err)
+	s.DbSecret = s.CliSecret
 	s.WriteRevision()
 }
 
 // select secret by key
 func (s *SecretCtx) Select() {
 	var secrets []*Secret
-	err := pgxscan.Select(ctx, s.Pool, &secrets, s.Conf.SelectSecrets)
+	err := pgxscan.Select(ctx, s.Pool, &secrets, selectSecrets)
 	for _, v := range secrets {
 		fmt.Printf("- [ %s ]\n", v.Key)
 	}
@@ -93,7 +94,7 @@ func (s *SecretCtx) Select() {
 
 // select secret by key
 func (s *SecretCtx) Get() {
-	err := pgxscan.Get(ctx, s.Pool, &s.DbSecret, s.Conf.SelectSecret, s.CliSecret.Key)
+	err := pgxscan.Get(ctx, s.Pool, &s.DbSecret, selectSecret, s.CliSecret.Key)
 	checkErr(err)
 	s.DbSecret.Value = DecryptString(s.DbSecret.Value)
 	s.DbSecret.Notes = DecryptString(s.DbSecret.Notes)
@@ -144,18 +145,18 @@ func (s *SecretCtx) Update() {
 	}
 
 	// get encrypted data
-	encValue := EncryptString(s.DbSecret.Value)
-	encNotes := EncryptString(s.DbSecret.Notes)
+	s.DbSecret.Value = EncryptString(s.DbSecret.Value)
+	s.DbSecret.Notes = EncryptString(s.DbSecret.Notes)
 	s.DbSecret.Revision += 1
 	_, err := s.Pool.Exec(
 		ctx,
-		s.Conf.UpdateSecret,
+		updateSecret,
 		s.DbSecret.Key,
 		s.DbSecret.Revision,
-		encValue,
+		s.DbSecret.Value,
 		s.DbSecret.Username,
 		s.DbSecret.Uri,
-		encNotes,
+		s.DbSecret.Notes,
 		s.DbSecret.IsDeleted,
 	)
 	checkErr(err)
@@ -164,18 +165,15 @@ func (s *SecretCtx) Update() {
 
 func (s *SecretCtx) WriteRevision() {
 	log.Println("s.DbSecret ", s.DbSecret)
-	// get encrypted data
-	encValue := EncryptString(s.DbSecret.Value)
-	encNotes := EncryptString(s.DbSecret.Notes)
 	_, err := s.Pool.Exec(
 		ctx,
-		s.Conf.InsertRevision,
+		insertRevision,
 		s.DbSecret.Key,
 		s.DbSecret.Revision,
-		encValue,
+		s.DbSecret.Value,
 		s.DbSecret.Username,
 		s.DbSecret.Uri,
-		encNotes,
+		s.DbSecret.Notes,
 		s.DbSecret.Type,
 		s.DbSecret.IsDeleted,
 	)
@@ -184,10 +182,10 @@ func (s *SecretCtx) WriteRevision() {
 
 // drop secrets table
 func (s *SecretCtx) Drop() {
-	for _, v := range s.Conf.Drops {
-		_, err := s.Pool.Exec(ctx, v.Query)
-		checkErr(err)
-	}
+	_, err := s.Pool.Exec(ctx, dropTableRevision)
+	checkErr(err)
+	_, err = s.Pool.Exec(ctx, dropTableSecrets)
+	checkErr(err)
 }
 
 func (s *SecretCtx) ImportBitwarden() {

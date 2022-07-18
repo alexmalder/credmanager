@@ -15,7 +15,7 @@ func main() {
 		log.Fatal("pgx.Connect", err)
 	}
 	ctx.Pool = connection
-	ctx.Conf = src.ReadConfig()
+	//ctx.Conf = src.ReadConfig()
 	switch {
 	case ctx.Scope == src.ScopeMigrate:
 		ctx.Migrate()

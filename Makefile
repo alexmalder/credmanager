@@ -26,3 +26,7 @@ migrate:
 
 drop:
 	go run main.go drop
+
+install:
+	go build -o credmanager main.go
+	sudo mv ./credmanager /usr/local/bin

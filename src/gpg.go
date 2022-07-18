@@ -79,7 +79,6 @@ func DecryptString(encString string) string {
 		subkey.PrivateKey.Decrypt(passphraseByte)
 	}
 	//log.Println("Finished decrypting private key using passphrase")
-
 	// Decode the base64 string
 	dec, err := base64.StdEncoding.DecodeString(encString)
 	checkErr(err)
