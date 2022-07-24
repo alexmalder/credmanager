@@ -1,21 +1,48 @@
 package main
 
 import (
-	"context"
+	"bytes"
+	//"context"
+	"fmt"
 	"log"
 	"main/src"
+	"strings"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	"html/template"
+	"net/http"
+
+	//"github.com/jackc/pgx/v4/pgxpool"
 )
+
+func serve() {
+	ctx := src.Getopts()
+    ctx.Init()
+    data := ctx.Select()
+	t, err := template.ParseFiles("templates/hello.html")
+	if err != nil {
+		log.Fatal(err)
+	}
+	var b bytes.Buffer
+	err = t.Execute(&b, data)
+	if err != nil {
+		log.Fatal(err)
+	}
+	http.HandleFunc("/provision", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "ok")
+	})
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, b.String())
+	})
+	http.Handle("/static/", http.StripPrefix(strings.TrimRight("/static/", "/"), http.FileServer(http.Dir("static"))))
+
+	// listen to port
+	http.ListenAndServe(":5050", nil)
+
+}
 
 func main() {
 	ctx := src.Getopts()
-	connection, err := pgxpool.Connect(context.Background(), src.ConnectionString())
-	if err != nil {
-		log.Fatal("pgx.Connect", err)
-	}
-	ctx.Pool = connection
-	//ctx.Conf = src.ReadConfig()
+    ctx.Init()
 	switch {
 	case ctx.Scope == src.ScopeMigrate:
 		ctx.Migrate()
@@ -37,6 +64,8 @@ func main() {
 		ctx.Update()
 	case ctx.Scope == src.ScopeDrop:
 		ctx.Drop()
+	case ctx.Scope == "serve":
+		serve()
 	default:
 		log.Println("Scope is not defined")
 	}

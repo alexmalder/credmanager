@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Page Title</title>
+        <link rel="stylesheet" href="/static/normalize.css">
+        <link rel="stylesheet" href="/static/milligram.css">
+    </head>
+    <body>
+        <div class="container header">
+            <div class="row header mobilehide" id="menuBody">
+                <a href="/" class="column button button-clear">Vault</a>
+                <a href="/" class="column button button-clear">Config Files</a>
+                <a href="/" class="column button button-clear">Config Maps</a>
+                <a href="/" class="column button button-clear">About</a>
+            </div>
+        </div>
+        <br/>
+        <div class="container">
+            <h2>My Vault:</h2>
+            <div class="row">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Key</th>
+                            <th>Username</th>
+                            <th>Uri</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{ range . }}
+                        <tr>
+                            <td>{{ .Key }}</td>
+                            <td>{{ .Username }}</td>
+                            <td>{{ .Uri }}</td>
+                            <td>
+                                <a class="button button-clear">
+                                    Show
+                                </a>
+                            </td>
+                        </tr>
+                        {{ end }}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </body>
+</html>

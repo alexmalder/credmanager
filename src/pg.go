@@ -50,6 +50,14 @@ func ConnectionString() string {
 	)
 }
 
+func (s *SecretCtx) Init() {
+	connection, err := pgxpool.Connect(context.Background(), ConnectionString())
+	if err != nil {
+		log.Fatal("pgx.Connect", err)
+	}
+	s.Pool = connection
+}
+
 // make database migrations
 func (s *SecretCtx) Migrate() {
 	_, err := s.Pool.Exec(ctx, createTableRevision)
@@ -82,7 +90,7 @@ func (s *SecretCtx) Save(recordType string) {
 }
 
 // select secret by key
-func (s *SecretCtx) Select() {
+func (s *SecretCtx) Select() []*Secret {
 	var secrets []*Secret
 	err := pgxscan.Select(ctx, s.Pool, &secrets, selectSecrets)
 	for _, v := range secrets {
@@ -90,6 +98,7 @@ func (s *SecretCtx) Select() {
 	}
 	fmt.Printf("- Total items: [ %v ]\n", len(secrets))
 	checkErr(err)
+    return secrets
 }
 
 // select secret by key

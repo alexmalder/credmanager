@@ -18,6 +18,7 @@ const (
 	ScopeDrop                   = "drop"
 	ScopeMigrate                = "migrate"
 	ScopeImportBitwarden        = "import-bitwarden"
+    ScopeServe                  = "serve"
 	TypeFile                    = "file"
 	TypeValue                   = "value"
 )
@@ -93,6 +94,10 @@ func Getopts() SecretCtx {
 				"drop secrets table",
 				getopt.Definitions{},
 			},
+            ScopeServe: {
+                "serve static pages",
+                getopt.Definitions{},
+            },
 		},
 	}
 
